@@ -1,153 +1,366 @@
 # Fila Delivery
 
-Fila Delivery e um SaaS web para organizar o fluxo de pedidos de restaurantes com alto volume de delivery, separando cozinha, conferencia, entrega, TVs operacionais e painel administrativo.
+![Fila Delivery](docs/images/banner.png)
 
-## Arquitetura
+## Sobre o projeto
 
-- `apps/api`: API Node.js ESM com `node:sqlite`, migrations, seeds, autenticao, auditoria, logs estruturados, backup e endpoints de saude.
-- `apps/web`: frontend React/Vite com layouts separados para restaurante e administrador.
-- `docs`: documentacao tecnica do banco e operacao.
+O **Fila Delivery** é um SaaS web desenvolvido para restaurantes que trabalham com delivery e precisam organizar melhor o fluxo interno de pedidos.
 
-## Requisitos locais
+A plataforma foi criada para reduzir falhas de comunicação entre cozinha, conferência e entrega, centralizando os pedidos em um único sistema.
 
-- Node.js 24 ou superior para suporte ao `node:sqlite`.
-- npm.
+O objetivo é substituir processos manuais, como anotações, chamadas de números e comunicação verbal, oferecendo uma operação mais organizada e eficiente.
 
-## Configuracao
+## Funcionalidades
 
-1. Copie `.env.example` para `.env`.
-2. Troque `FILA_DELIVERY_TOKEN_SECRET` por uma chave forte.
-3. Defina `SEED_ADMIN_PASSWORD` antes de subir um ambiente novo.
-4. Ajuste `CORS_ORIGIN` para o dominio real em producao.
+* ✅ Autenticação de usuários
+* ✅ Sistema multi-restaurante (multi-tenant)
+* ✅ Painel administrativo da plataforma
+* ✅ Cadastro e gerenciamento de restaurantes
+* ✅ Controle de pedidos
+* ✅ Fluxo operacional de cozinha
+* ✅ Tela operacional para TV
+* ✅ Controle de entregas
+* ✅ Histórico de pedidos
+* ✅ Auditoria e logs estruturados
+* ✅ Sistema de backup do banco
+* ✅ Controle de permissões por perfil de usuário
 
-## Primeiro acesso ADMIN
+---
 
-Na inicializacao, a API executa migrations e depois roda os seeds. O seed
-`apps/api/src/database/seeds/adminSeed.js` cria o primeiro usuario ADMIN quando
-nao existe nenhum usuario com role `ADMIN`.
+# Arquitetura
 
-Configure estas variaveis no `.env` antes de iniciar a API pela primeira vez:
+O projeto está dividido em duas aplicações principais:
 
-```bash
-SEED_ADMIN_NAME=Administrador Fila Delivery
-SEED_ADMIN_EMAIL=admin@filadelivery.com.br
-SEED_ADMIN_PASSWORD=troque-esta-senha
+```
+fila-delivery/
+│
+├── apps/
+│   ├── api/       # Backend
+│   └── web/       # Frontend
+│
+├── docs/          # Documentação técnica
+│
+└── README.md
 ```
 
-Depois acesse o login com o e-mail e senha definidos acima. Se o banco ja
-existir mas ainda nao houver ADMIN, basta definir `SEED_ADMIN_PASSWORD` e
-reiniciar a API; o seed sera executado novamente.
+## Backend (`apps/api`)
 
-## Desenvolvimento
+API REST desenvolvida em Node.js utilizando:
+
+* Node.js
+* Express
+* SQLite
+* Migrations versionadas
+* Seeds automáticos
+* Autenticação
+* Controle de sessões
+* Auditoria
+* Logs estruturados
+* Rotinas de backup
+
+## Frontend (`apps/web`)
+
+Aplicação web desenvolvida com:
+
+* React
+* Vite
+* JavaScript
+* Componentização
+* Layouts separados por perfil de acesso
+
+---
+
+# Tecnologias utilizadas
+
+## Frontend
+
+* React
+* Vite
+* JavaScript
+* CSS
+
+## Backend
+
+* Node.js
+* Express
+* SQLite
+* API REST
+
+## Ferramentas
+
+* Git
+* GitHub
+* Docker
+* Postman
+
+---
+
+# Requisitos
+
+Para executar o projeto localmente:
+
+* Node.js 24+
+* npm
+
+---
+
+# Configuração do ambiente
+
+## 1. Clone o projeto
+
+```bash
+git clone https://github.com/seu-usuario/fila-delivery.git
+```
+
+Entre na pasta:
+
+```bash
+cd fila-delivery
+```
+
+---
+
+## 2. Configure as variáveis de ambiente
+
+Copie o arquivo de exemplo:
+
+```bash
+.env.example
+```
+
+para:
+
+```bash
+.env
+```
+
+Configure as variáveis necessárias:
+
+* Chaves de autenticação
+* Configurações do ambiente
+* Dados iniciais do administrador
+
+⚠️ Nunca envie arquivos `.env` com informações reais para o GitHub.
+
+---
+
+# Primeiro acesso administrativo
+
+Na primeira inicialização, a API executa:
+
+1. Criação das tabelas através das migrations.
+2. Execução dos seeds necessários.
+3. Criação do usuário administrador inicial.
+
+As informações do administrador devem ser definidas através das variáveis de ambiente.
+
+Exemplo:
+
+```env
+SEED_ADMIN_NAME=Administrador
+SEED_ADMIN_EMAIL=admin@exemplo.com
+SEED_ADMIN_PASSWORD=sua-senha-segura
+```
+
+---
+
+# Executando o projeto
+
+Instale as dependências:
 
 ```bash
 npm install
+```
+
+Execute a API:
+
+```bash
 npm run dev:api
+```
+
+Execute o frontend:
+
+```bash
 npm run dev:web
 ```
 
-A API sobe por padrao em `http://localhost:3333` e o web em `http://localhost:5173`.
+Aplicação:
 
-## Scripts principais
+```
+Frontend:
+http://localhost:5173
+
+API:
+http://localhost:3333
+```
+
+---
+
+# Scripts principais
+
+## Backend
+
+Iniciar API:
 
 ```bash
 npm run start:api
-npm run build:web
-npm run backup:api
 ```
 
-## Endpoints operacionais
-
-- `GET /health`: status da API, conexao com banco, versao, ambiente e timestamp.
-- `GET /ready`: indica se a aplicacao esta pronta para receber requisicoes.
-- `GET /version`: nome, versao, build, ambiente e data.
-
-Todas as respostas da API seguem o envelope padrao:
-
-```json
-{
-  "success": true,
-  "message": "...",
-  "data": {}
-}
-```
-
-## Banco de dados
-
-O SQLite continua sendo o banco principal do MVP. O schema e criado por migrations versionadas em `apps/api/src/database/migrations`.
-
-Fluxo:
-
-1. A API executa migrations na inicializacao.
-2. Seeds essenciais sao aplicados sem duplicar dados existentes.
-3. Alteracoes futuras devem ser feitas sempre por novas migrations.
-
-Mais detalhes: `docs/database-architecture.md`.
-
-## Backup
-
-Para gerar backup local:
+Criar backup:
 
 ```bash
 npm run backup:api
 ```
 
-O backup copia o arquivo SQLite configurado em `DATABASE_PATH` para `BACKUP_DIR`, calcula checksum SHA-256 e registra o resultado na tabela `backups`.
+Executar testes:
 
-## Restore
+```bash
+npm run test:api
+```
 
-1. Pare a API.
-2. Guarde uma copia do banco atual.
-3. Copie o arquivo de backup desejado para o caminho definido em `DATABASE_PATH`.
-4. Inicie a API.
-5. Valide `GET /health` e faca login como ADMIN.
+---
 
-Nunca restaure backup com a API escrevendo no banco.
+## Frontend
 
-## Docker
+Build de produção:
 
-1. Copie `.env.example` para `.env`.
-2. Ajuste segredos e senha inicial.
+```bash
+npm run build:web
+```
+
+---
+
+# Banco de dados
+
+Atualmente o projeto utiliza SQLite como banco principal do MVP.
+
+A estrutura do banco é criada através de migrations versionadas.
+
+Fluxo:
+
+1. API inicia.
+2. Migrations são verificadas.
+3. Estrutura do banco é atualizada.
+4. Seeds necessários são executados.
+
+Para ambientes maiores e produção com alto volume, a migração para PostgreSQL é recomendada.
+
+---
+
+# Backup e restauração
+
+O sistema possui rotina de backup do banco.
+
+O backup:
+
+* Copia o arquivo do banco configurado.
+* Calcula checksum SHA-256.
+* Registra informações do processo.
+
+Antes de restaurar:
+
+1. Pare a aplicação.
+2. Faça uma cópia do banco atual.
+3. Restaure o arquivo desejado.
+4. Reinicie a aplicação.
+5. Valide o funcionamento.
+
+---
+
+# Docker
+
+Para executar utilizando Docker:
+
+1. Crie o arquivo `.env` baseado no `.env.example`.
+2. Configure as variáveis obrigatórias.
 3. Execute:
 
 ```bash
 docker compose up --build
 ```
 
-O frontend ficara em `http://localhost:8080`. O banco e os backups usam volumes persistentes (`api-data` e `api-backups`).
+Os dados persistentes utilizam volumes Docker.
 
-## Deploy
+---
 
-Checklist minimo:
+# Deploy
 
-- Dominio proprio configurado.
-- HTTPS ativo no proxy ou provedor.
-- `NODE_ENV=production`.
-- `FILA_DELIVERY_TOKEN_SECRET` forte.
-- `CORS_ORIGIN` restrito ao dominio do frontend.
-- Volumes persistentes para banco e backups.
-- Rotina externa para copiar backups para armazenamento fora do servidor.
-- Monitoramento dos logs JSON da API.
+Para publicar o sistema em produção:
 
-## Seguranca
+## Frontend
 
-- Tokens de sessao e recuperacao sao persistidos apenas como hash.
-- Logout revoga sessao no banco.
-- Rate limit protege login.
-- Rotas ADMIN e CLIENT sao isoladas por middleware.
-- Dados multi-tenant usam `restaurant_id`.
-- Logs estruturados removem campos sensiveis.
+Pode ser hospedado utilizando plataformas como:
 
-## Testes
+* Vercel
+* Netlify
 
-A suite automatizada da API cobre os fluxos criticos do MVP. Execute:
+## Backend
+
+Recomendado utilizar serviços como:
+
+* Railway
+* Render
+* Fly.io
+
+Checklist de produção:
+
+* HTTPS ativo
+* Variáveis de ambiente configuradas
+* Segredos protegidos
+* CORS configurado corretamente
+* Banco persistente
+* Rotina de backup configurada
+* Monitoramento de logs
+
+---
+
+# Segurança
+
+O projeto possui:
+
+* Controle de acesso por perfil
+* Isolamento de dados por restaurante
+* Proteção de rotas administrativas
+* Hash de informações sensíveis
+* Controle de sessões
+* Rate limit em autenticação
+* Logs sem exposição de dados sensíveis
+
+---
+
+# Testes
+
+A API possui testes automatizados para os principais fluxos do sistema.
+
+Executar:
 
 ```bash
 npm run test:api
 ```
 
-Para validar o frontend:
+Validar frontend:
 
 ```bash
 npm run build:web
 ```
+
+---
+
+# Próximas evoluções
+
+Possíveis melhorias futuras:
+
+* Migração para PostgreSQL
+* Aplicativo mobile para entregadores
+* Integração com plataformas de delivery
+* Dashboard com métricas avançadas
+* Sistema de planos e assinaturas
+* Gestão financeira
+
+---
+
+# Autor
+
+Desenvolvido por **Vini Oliveira**
+
+Projeto criado com foco em arquitetura SaaS, desenvolvimento Full Stack e soluções para operações de delivery.
