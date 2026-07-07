@@ -1,0 +1,15 @@
+{
+  "name": "@fila-delivery/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.1.4"
+  },
+  "scripts": {
+    "dev": "node --experimental-sqlite src/server.js",
+    "start": "node --experimental-sqlite src/server.js",
+    "backup": "node --experimental-sqlite src/scripts/createBackup.js",
+    "test": "node --experimental-sqlite src/tests/criticalFlows.test.js"
+  }
+}

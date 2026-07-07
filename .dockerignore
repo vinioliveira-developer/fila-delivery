@@ -1,0 +1,11 @@
+node_modules
+apps/*/node_modules
+apps/*/dist
+apps/api/data
+apps/api/backups
+.env
+.git
+.agents
+.codex
+outputs
+work
