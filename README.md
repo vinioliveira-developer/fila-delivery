@@ -1,6 +1,6 @@
 # Fila Delivery
 
-![Fila Delivery](docs/images/banner.png)
+![Fila Delivery](docs/images/tela-login.png)
 
 ## Sobre o projeto
 
@@ -24,6 +24,42 @@ O objetivo é substituir processos manuais, como anotações, chamadas de númer
 * ✅ Auditoria e logs estruturados
 * ✅ Sistema de backup do banco
 * ✅ Controle de permissões por perfil de usuário
+
+---
+
+## 📸 Screenshots
+
+### Login
+
+![Login](docs/images/tela-login.png)
+
+### Dashboard Restaurante
+
+![Dashboard Restaurante](docs/images/tela-inicio.png)
+
+### Cozinha
+
+![Cozinha](docs/images/tela-cozinha.png)
+
+### TV
+
+![TV](docs/images/tela-pedidos-em-preparo.png)
+
+### Conferencia
+
+![Conferencia](docs/images/tela-conferencia.png)
+
+### TV
+
+![Histórico](docs/images/tela-pedidos-pronto.png)
+
+### Entrega
+
+![Histórico](docs/images/tela-entrega.png)
+
+### Histórico
+
+![Histórico](docs/images/tela-historico.png)
 
 ---
 
