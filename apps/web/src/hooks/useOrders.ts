@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CreateOrderInput,
   OrdersService
 } from "../services/ordersService";
 import { Order, OrderStatus } from "../types/order";
 import { pruneOldFinishedOrders } from "../utils/orders";
+import { usePolling } from "./usePolling";
 
 type AddOrderResult =
   | { ok: true }
@@ -15,43 +16,64 @@ type AddOrderResult =
       message?: string;
     };
 
+const ORDERS_POLLING_INTERVAL_MS = 2000;
+
+function areOrdersEqual(current: Order[], next: Order[]) {
+  return JSON.stringify(current) === JSON.stringify(next);
+}
+
 export function useOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [ordersError, setOrdersError] = useState("");
+  const isMountedRef = useRef(false);
 
   useEffect(() => {
-    let isMounted = true;
-
-    OrdersService.list()
-      .then((response) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setOrders(pruneOldFinishedOrders(response.orders));
-        setOrdersError("");
-      })
-      .catch((error) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setOrders([]);
-        setOrdersError(
-          error instanceof Error ? error.message : "Erro ao carregar pedidos."
-        );
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      });
+    isMountedRef.current = true;
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
   }, []);
+
+  const refreshOrders = useCallback(async (clearOnError = false) => {
+    try {
+      const response = await OrdersService.list();
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      const nextOrders = pruneOldFinishedOrders(response.orders);
+
+      setOrders((current) =>
+        areOrdersEqual(current, nextOrders) ? current : nextOrders
+      );
+      setOrdersError("");
+    } catch (error) {
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      if (clearOnError) {
+        setOrders([]);
+      }
+
+      setOrdersError(
+        error instanceof Error ? error.message : "Erro ao carregar pedidos."
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshOrders(true).finally(() => {
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
+    });
+  }, [refreshOrders]);
+
+  usePolling(() => refreshOrders(false), ORDERS_POLLING_INTERVAL_MS);
 
   const actions = useMemo(
     () => ({
