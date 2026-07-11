@@ -16,3 +16,21 @@ export function pruneOldFinishedOrders(orders: Order[]) {
 export function getUniquePlatforms(orders: Order[]) {
   return Array.from(new Set(orders.map((order) => order.platform)));
 }
+
+export function formatPlatformName(platform: string) {
+  const names: Record<string, string> = {
+    "99FOOD": "99Food",
+    IFOOD: "iFood",
+    KEETA: "Keeta"
+  };
+
+  return names[platform.toUpperCase()] ?? platform;
+}
+
+export function formatOrderStatus(status: Order["status"]) {
+  if (status === "CANCELADO") {
+    return "EXCLUIDO";
+  }
+
+  return status.replace("_", " ");
+}

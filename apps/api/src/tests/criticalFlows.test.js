@@ -25,7 +25,7 @@ const server = spawn(
       PORT: String(port),
       DATABASE_PATH: databasePath,
       BACKUP_DIR: backupDir,
-      CORS_ORIGIN: "*",
+      CORS_ORIGIN: "http://localhost:5173,http://localhost:5174",
       FILA_DELIVERY_TOKEN_SECRET: "test-secret-with-more-than-32-characters",
       SEED_ADMIN_EMAIL: adminEmail,
       SEED_ADMIN_PASSWORD: adminPassword
@@ -74,12 +74,13 @@ async function waitForHealth() {
   throw new Error(`API nao ficou saudavel. Logs: ${output}`);
 }
 
-async function request(path, { method = "GET", token, body } = {}) {
+async function request(path, { method = "GET", token, body, origin } = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(origin ? { Origin: origin } : {})
     },
     body: body ? JSON.stringify(body) : undefined
   });
@@ -148,6 +149,15 @@ try {
   const health = await expectSuccess("/health");
   assert.equal(health.status, "online");
   assert.equal(health.database, "connected");
+
+  const localCors = await request("/health", { origin: "http://localhost:5174" });
+  assert.equal(
+    localCors.response.headers.get("access-control-allow-origin"),
+    "http://localhost:5174"
+  );
+
+  const blockedCors = await request("/health", { origin: "http://localhost:9999" });
+  assert.equal(blockedCors.response.headers.get("access-control-allow-origin"), null);
 
   const ready = await expectSuccess("/ready");
   assert.equal(ready.ready, true);
@@ -260,6 +270,20 @@ try {
     body: { status: "ENTREGUE" }
   });
   assert.equal(deliveredOrder.order.status, "ENTREGUE");
+
+  const manualReadyOrder = await expectSuccess("/api/orders", {
+    method: "POST",
+    token: clientA.token,
+    body: { number: "1002", platform: "IFOOD", status: "PRONTO" }
+  });
+  assert.equal(manualReadyOrder.order.status, "PRONTO");
+  assert.ok(manualReadyOrder.order.readyAt);
+
+  await expectSuccess(`/api/orders/${manualReadyOrder.order.id}`, {
+    method: "PATCH",
+    token: clientA.token,
+    body: { status: "CANCELADO" }
+  });
 
   await expectSuccess("/api/orders/finalized", {
     method: "DELETE",

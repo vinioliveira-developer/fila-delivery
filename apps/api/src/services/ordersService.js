@@ -5,6 +5,7 @@ import { rowToOrder } from "../models/mappers.js";
 import { ordersRepository } from "../repositories/ordersRepository.js";
 
 const allowedStatuses = ["EM_PREPARO", "PRONTO", "ENTREGUE", "CANCELADO"];
+const allowedCreateStatuses = ["EM_PREPARO", "PRONTO"];
 
 export const ordersService = {
   list(restaurantId) {
@@ -14,11 +15,17 @@ export const ordersService = {
   create(restaurantId, payload) {
     const orderNumber = payload.number?.trim();
     const platform = payload.platform?.trim().toUpperCase();
+    const status = payload.status ?? "EM_PREPARO";
 
     if (!orderNumber || !platform) {
       throw new AppError("Numero e plataforma sao obrigatorios.", 400);
     }
 
+    if (!allowedCreateStatuses.includes(status)) {
+      throw new AppError("Status inicial invalido.", 400);
+    }
+
+    const timestamp = now();
     const duplicate = ordersRepository.findActiveDuplicate({
       restaurantId,
       orderNumber,
@@ -35,7 +42,9 @@ export const ordersService = {
       restaurantId,
       orderNumber,
       platform,
-      createdAt: now(),
+      status,
+      createdAt: timestamp,
+      readyAt: status === "PRONTO" ? timestamp : null,
       note: payload.note ?? null
     });
 

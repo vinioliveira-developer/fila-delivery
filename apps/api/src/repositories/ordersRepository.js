@@ -43,16 +43,18 @@ export const ordersRepository = {
     db.prepare(
       `
         INSERT INTO orders
-          (id, restaurant_id, order_number, platform, status, created_at, updated_at, note)
-        VALUES (?, ?, ?, ?, 'EM_PREPARO', ?, ?, ?)
+          (id, restaurant_id, order_number, platform, status, created_at, updated_at, ready_at, note)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
     ).run(
       order.id,
       order.restaurantId,
       order.orderNumber,
       order.platform,
+      order.status,
       order.createdAt,
       order.createdAt,
+      order.readyAt,
       order.note
     );
   },

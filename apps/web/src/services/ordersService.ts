@@ -4,6 +4,7 @@ import { httpRequest } from "./http/httpClient";
 export type CreateOrderInput = {
   number: string;
   platform: Platform;
+  status?: Extract<OrderStatus, "EM_PREPARO" | "PRONTO">;
   note?: string;
 };
 

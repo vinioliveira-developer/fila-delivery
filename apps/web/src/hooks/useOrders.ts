@@ -106,7 +106,7 @@ export function useOrders() {
               id: "",
               number: trimmedNumber,
               platform: input.platform,
-              status: "EM_PREPARO",
+              status: input.status ?? "EM_PREPARO",
               createdAt: new Date().toISOString()
             }
           };

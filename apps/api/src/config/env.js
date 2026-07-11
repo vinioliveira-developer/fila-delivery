@@ -5,11 +5,39 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(__dirname, "../../../../.env") });
 
+const developmentOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const productionOrigins = ["https://fila-delivery-web.vercel.app"];
+
+function parseOrigins(value) {
+  return value
+    ? value
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    : [];
+}
+
+function uniqueOrigins(origins) {
+  return Array.from(new Set(origins));
+}
+
+function getAllowedOrigins() {
+  const configuredOrigins = parseOrigins(process.env.CORS_ORIGIN);
+
+  if (process.env.NODE_ENV === "production") {
+    return uniqueOrigins(
+      configuredOrigins.length > 0 ? configuredOrigins : productionOrigins
+    );
+  }
+
+  return uniqueOrigins([...configuredOrigins, ...developmentOrigins]);
+}
+
 export const env = {
   appName: process.env.APP_NAME ?? "Fila Delivery",
   appVersion: process.env.APP_VERSION ?? "0.1.0",
   apiPort: Number(process.env.PORT ?? 3333),
-  allowedOrigin: process.env.CORS_ORIGIN ?? "*",
+  allowedOrigins: getAllowedOrigins(),
   backupDir: process.env.BACKUP_DIR ?? "backups",
   buildDate: process.env.BUILD_DATE ?? null,
   buildSha: process.env.BUILD_SHA ?? "local",

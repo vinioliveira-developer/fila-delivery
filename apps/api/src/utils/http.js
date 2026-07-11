@@ -1,9 +1,9 @@
 import { env } from "../config/env.js";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": env.allowedOrigin,
   "Access-Control-Allow-Headers": "content-type, authorization",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Vary": "Origin"
 };
 
 const securityHeaders = {
@@ -26,9 +26,20 @@ export async function readJson(request) {
   return raw ? JSON.parse(raw) : {};
 }
 
+export function applyCorsHeaders(request, response) {
+  const origin = request.headers.origin;
+
+  if (origin && env.allowedOrigins.includes(origin)) {
+    response.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  Object.entries(corsHeaders).forEach(([header, value]) => {
+    response.setHeader(header, value);
+  });
+}
+
 export function sendSuccess(response, statusCode, message, data = {}) {
   response.writeHead(statusCode, {
-    ...corsHeaders,
     ...securityHeaders,
     "Content-Type": "application/json; charset=utf-8"
   });
@@ -43,7 +54,6 @@ export function sendSuccess(response, statusCode, message, data = {}) {
 
 export function sendError(response, statusCode, message, errors = []) {
   response.writeHead(statusCode, {
-    ...corsHeaders,
     ...securityHeaders,
     "Content-Type": "application/json; charset=utf-8"
   });
@@ -58,7 +68,6 @@ export function sendError(response, statusCode, message, errors = []) {
 
 export function sendOptions(response) {
   response.writeHead(204, {
-    ...corsHeaders,
     ...securityHeaders
   });
   response.end();

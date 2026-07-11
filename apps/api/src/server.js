@@ -5,7 +5,7 @@ import { seedDatabase } from "./database/seed.js";
 import { handleError } from "./middlewares/errorMiddleware.js";
 import { createRequestContext } from "./middlewares/requestContext.js";
 import { dispatch } from "./routes/router.js";
-import { sendOptions } from "./utils/http.js";
+import { applyCorsHeaders, sendOptions } from "./utils/http.js";
 import { logger } from "./utils/logger.js";
 
 const port = env.apiPort;
@@ -18,6 +18,7 @@ const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
   const requestContext = createRequestContext(request, url.pathname);
   response.setHeader("X-Request-Id", requestContext.requestId);
+  applyCorsHeaders(request, response);
 
   logger.info("request.started", requestContext);
 

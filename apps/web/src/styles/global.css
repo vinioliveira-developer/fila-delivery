@@ -514,6 +514,10 @@ select:focus {
   width: 100%;
 }
 
+.manual-order-entry-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .icon-danger-button {
   background: #ffe0e0;
   border: 0;
@@ -660,6 +664,48 @@ select:focus {
 .order-actions {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
+}
+
+.manual-order-board {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.manual-order-column {
+  background: #ffffff;
+  border: 1px solid #dfe6ec;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.manual-order-list {
+  display: grid;
+  gap: 10px;
+}
+
+.manual-order-button {
+  background: #f8fafc;
+  border: 1px solid #cbd6df;
+  border-radius: 8px;
+  color: #172026;
+  font-size: 28px;
+  font-weight: 950;
+  min-height: 58px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.manual-order-button:hover {
+  background: #eef6ff;
+  border-color: #1677ff;
+}
+
+.manual-modal-actions {
+  display: grid;
   gap: 10px;
 }
 
@@ -952,6 +998,11 @@ select:focus {
   }
 
   .platform-entry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-order-entry-grid,
+  .manual-order-board {
     grid-template-columns: 1fr;
   }
 
