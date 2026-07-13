@@ -1,5 +1,9 @@
 import { Order } from "../../types/order";
-import { formatPlatformName, getUniquePlatforms } from "../../utils/orders";
+import {
+  formatPlatformName,
+  getPlatformHeaderStyle,
+  getUniquePlatforms
+} from "../../utils/orders";
 
 type PlatformColumnsProps = {
   orders: Order[];
@@ -29,7 +33,9 @@ export function PlatformColumns({
     <div className={`platform-board ${variant}`}>
       {visiblePlatforms.map((platform) => (
         <section className="platform-column" key={platform}>
-          <header>{formatPlatformName(platform)}</header>
+          <header style={getPlatformHeaderStyle(platform)}>
+            {formatPlatformName(platform)}
+          </header>
 
           <div className="platform-list">
             {grouped[platform].map((order) => (

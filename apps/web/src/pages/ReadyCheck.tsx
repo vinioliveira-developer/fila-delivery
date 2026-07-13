@@ -2,7 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { EmptyState } from "../components/shared/EmptyState";
 import { useOrders } from "../hooks/useOrders";
 import { Order, Platform } from "../types/order";
-import { formatPlatformName } from "../utils/orders";
+import { formatPlatformName, getPlatformHeaderStyle } from "../utils/orders";
 
 const MANUAL_PLATFORMS: Platform[] = ["IFOOD", "99FOOD", "KEETA"];
 
@@ -93,7 +93,12 @@ export function ReadyCheck() {
             key={platform}
             onSubmit={(event) => handleSubmit(event, platform)}
           >
-            <h3>{formatPlatformName(platform)}</h3>
+            <h3
+              className="platform-card-header"
+              style={getPlatformHeaderStyle(platform)}
+            >
+              {formatPlatformName(platform)}
+            </h3>
 
             <label>
               Numero do pedido
@@ -139,9 +144,14 @@ export function ReadyCheck() {
         {!isLoading && !ordersError
           ? MANUAL_PLATFORMS.map((platform) => (
               <section className="manual-order-column" key={platform}>
-                <div className="section-title">
+                <div
+                  className="section-title platform-card-header"
+                  style={getPlatformHeaderStyle(platform)}
+                >
                   <h3>{formatPlatformName(platform)}</h3>
-                  <span>{ordersByPlatform[platform]?.length ?? 0} pedidos</span>
+                  <span style={{ color: getPlatformHeaderStyle(platform).color }}>
+                    {ordersByPlatform[platform]?.length ?? 0} pedidos
+                  </span>
                 </div>
 
                 <div className="manual-order-list">

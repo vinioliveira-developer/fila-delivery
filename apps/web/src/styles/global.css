@@ -456,6 +456,8 @@ select:focus {
   display: flex;
   justify-content: space-between;
   margin-bottom: 14px;
+  padding: 10px;
+  border-radius: 5px;
 }
 
 .section-title h3 {
@@ -485,6 +487,8 @@ select:focus {
 }
 
 .platform-entry h3 {
+  padding: 10px;
+  border-radius: 5px;
   border-bottom: 1px solid #e4ebf1;
   font-size: 22px;
   margin: 0;
@@ -844,7 +848,7 @@ select:focus {
 .platform-board {
   display: grid;
   gap: 18px;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
 }
 
 .platform-column {
@@ -876,7 +880,7 @@ select:focus {
 }
 
 .platform-number {
-  background: rgba(255, 255, 255, 0.94);
+  background: #0bf577;
   border-radius: 8px;
   color: #101820;
   font-size: 44px;

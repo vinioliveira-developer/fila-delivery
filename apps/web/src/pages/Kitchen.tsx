@@ -4,6 +4,7 @@ import { OrderCard } from "../components/shared/OrderCard";
 import { useOrders } from "../hooks/useOrders";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { Platform } from "../types/order";
+import { getPlatformHeaderStyle } from "../utils/orders";
 
 export function Kitchen() {
   const { isLoading: isLoadingOrders, orders, ordersError, addOrder } = useOrders();
@@ -100,7 +101,10 @@ export function Kitchen() {
             key={platform}
             onSubmit={(event) => handleSubmit(event, platform)}
           >
-            <div className="platform-entry-header">
+            <div
+              className="platform-entry-header platform-card-header"
+              style={getPlatformHeaderStyle(platform)}
+            >
               <h3>{platform}</h3>
               <button
                 aria-label={`Excluir plataforma ${platform}`}

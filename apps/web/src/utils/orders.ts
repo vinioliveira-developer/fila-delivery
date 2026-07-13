@@ -1,5 +1,21 @@
+import { type CSSProperties } from "react";
 import { Order } from "../types/order";
 import { getOrderFinalizedAt } from "./date";
+
+const PLATFORM_HEADER_COLORS: Record<string, CSSProperties> = {
+  "99FOOD": {
+    backgroundColor: "#FFDD00",
+    color: "#101820"
+  },
+  IFOOD: {
+    backgroundColor: "#EA1D2C",
+    color: "#FFFFFF"
+  },
+  KEETA: {
+    backgroundColor: "#0DAD87",
+    color: "#101820"
+  }
+};
 
 export function pruneOldFinishedOrders(orders: Order[]) {
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -25,6 +41,10 @@ export function formatPlatformName(platform: string) {
   };
 
   return names[platform.toUpperCase()] ?? platform;
+}
+
+export function getPlatformHeaderStyle(platform: string): CSSProperties {
+  return PLATFORM_HEADER_COLORS[platform.toUpperCase()] ?? {};
 }
 
 export function formatOrderStatus(status: Order["status"]) {
