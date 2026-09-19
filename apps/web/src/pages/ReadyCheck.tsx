@@ -1,5 +1,6 @@
 import {
   FormEvent,
+  useEffect,
   useMemo,
   useRef,
   useState
@@ -73,6 +74,10 @@ function ManualOrderPlatformColumn({
 export function ReadyCheck() {
   const { addOrder, isLoading, orders, ordersError, updateStatus } = useOrders();
   const audioContextRef = useRef<AudioContext | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 900px)").matches
+  );
   const [numbersByPlatform, setNumbersByPlatform] = useState<Record<Platform, string>>(
     {}
   );
@@ -111,6 +116,21 @@ export function ReadyCheck() {
       }, {}),
     [readyOrders]
   );
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 900px)");
+
+    function handleMobileViewportChange(event: MediaQueryListEvent) {
+      setIsMobileViewport(event.matches);
+    }
+
+    setIsMobileViewport(mobileQuery.matches);
+    mobileQuery.addEventListener("change", handleMobileViewportChange);
+
+    return () => {
+      mobileQuery.removeEventListener("change", handleMobileViewportChange);
+    };
+  }, []);
 
   async function handleEnableAudio() {
     const didPlay = await playReadyNotification(audioContextRef);
@@ -184,7 +204,7 @@ export function ReadyCheck() {
             <label>
               Numero do pedido
               <input
-                autoFocus={index === 0}
+                autoFocus={index === 0 && !isMobileViewport}
                 inputMode="numeric"
                 onChange={(event) =>
                   setNumbersByPlatform((current) => ({
