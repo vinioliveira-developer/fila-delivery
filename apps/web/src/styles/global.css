@@ -1122,6 +1122,10 @@ select:focus {
     display: none;
   }
 
+  .manual-order-column-mobile-search-hidden {
+    display: none;
+  }
+
   .manual-order-button-single-result {
     grid-column: 1 / -1;
     text-align: center;

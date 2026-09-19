@@ -13,6 +13,7 @@ import { formatPlatformName, getPlatformHeaderStyle } from "../utils/orders";
 const MANUAL_PLATFORMS: Platform[] = ["IFOOD", "99FOOD", "KEETA"];
 
 type ManualOrderPlatformColumnProps = {
+  hideOnMobileSearch: boolean;
   isSingleSearchResult: boolean;
   orders: Order[];
   platform: Platform;
@@ -20,13 +21,21 @@ type ManualOrderPlatformColumnProps = {
 };
 
 function ManualOrderPlatformColumn({
+  hideOnMobileSearch,
   isSingleSearchResult,
   orders,
   platform,
   onSelectOrder
 }: ManualOrderPlatformColumnProps) {
   return (
-    <section className="manual-order-column" key={platform}>
+    <section
+      className={
+        hideOnMobileSearch
+          ? "manual-order-column manual-order-column-mobile-search-hidden"
+          : "manual-order-column"
+      }
+      key={platform}
+    >
       <div
         className="section-title platform-card-header"
         style={getPlatformHeaderStyle(platform)}
@@ -89,6 +98,8 @@ export function ReadyCheck() {
     [allReadyOrders, searchTerm]
   );
   const isSingleSearchResult = searchTerm.length > 0 && readyOrders.length === 1;
+  const shouldHideEmptyMobileSearchColumns =
+    searchTerm.length > 0 && readyOrders.length > 0;
 
   const ordersByPlatform = useMemo(
     () =>
@@ -227,18 +238,26 @@ export function ReadyCheck() {
         {ordersError ? <p className="form-error">{ordersError}</p> : null}
 
         {!isLoading && !ordersError
-          ? MANUAL_PLATFORMS.map((platform) => (
-              <ManualOrderPlatformColumn
-                isSingleSearchResult={isSingleSearchResult}
-                key={platform}
-                onSelectOrder={(order) => {
-                  setSelectedOrder(order);
-                  setActionError("");
-                }}
-                orders={ordersByPlatform[platform] ?? []}
-                platform={platform}
-              />
-            ))
+          ? MANUAL_PLATFORMS.map((platform) => {
+              const platformOrders = ordersByPlatform[platform] ?? [];
+
+              return (
+                <ManualOrderPlatformColumn
+                  hideOnMobileSearch={
+                    shouldHideEmptyMobileSearchColumns &&
+                    platformOrders.length === 0
+                  }
+                  isSingleSearchResult={isSingleSearchResult}
+                  key={platform}
+                  onSelectOrder={(order) => {
+                    setSelectedOrder(order);
+                    setActionError("");
+                  }}
+                  orders={platformOrders}
+                  platform={platform}
+                />
+              );
+            })
           : null}
       </div>
 
