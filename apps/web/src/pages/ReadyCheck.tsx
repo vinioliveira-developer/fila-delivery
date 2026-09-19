@@ -2,7 +2,6 @@ import {
   CSSProperties,
   FormEvent,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -11,6 +10,7 @@ import {
 import { EmptyState } from "../components/shared/EmptyState";
 import { useOrders } from "../hooks/useOrders";
 import { Order, Platform } from "../types/order";
+import { playReadyNotification } from "../utils/readyNotificationAudio";
 import { formatPlatformName, getPlatformHeaderStyle } from "../utils/orders";
 
 const MANUAL_PLATFORMS: Platform[] = ["IFOOD", "99FOOD", "KEETA"];
@@ -31,11 +31,6 @@ type ManualOrderPlatformColumnProps = {
   platform: Platform;
   onSelectOrder: (order: Order) => void;
 };
-
-type WindowWithWebkitAudio = Window &
-  typeof globalThis & {
-    webkitAudioContext?: typeof AudioContext;
-  };
 
 function ManualOrderPlatformColumn({
   orders,
@@ -179,8 +174,6 @@ function ManualOrderPlatformColumn({
 export function ReadyCheck() {
   const { addOrder, isLoading, orders, ordersError, updateStatus } = useOrders();
   const audioContextRef = useRef<AudioContext | null>(null);
-  const knownReadyOrderIdsRef = useRef<Set<string>>(new Set());
-  const hasInitializedReadyAudioRef = useRef(false);
   const [numbersByPlatform, setNumbersByPlatform] = useState<Record<Platform, string>>(
     {}
   );
@@ -205,10 +198,6 @@ export function ReadyCheck() {
     () => allReadyOrders.filter((order) => order.number.includes(searchTerm)),
     [allReadyOrders, searchTerm]
   );
-  const readyOrderIds = useMemo(
-    () => allReadyOrders.map((order) => order.id),
-    [allReadyOrders]
-  );
 
   const ordersByPlatform = useMemo(
     () =>
@@ -221,95 +210,10 @@ export function ReadyCheck() {
     [readyOrders]
   );
 
-  const playReadyNotification = useCallback(async () => {
-    const AudioContextConstructor =
-      window.AudioContext ??
-      (window as WindowWithWebkitAudio).webkitAudioContext;
-
-    if (!AudioContextConstructor) {
-      return true;
-    }
-
-    try {
-      const audioContext =
-        audioContextRef.current ?? new AudioContextConstructor();
-      audioContextRef.current = audioContext;
-
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-
-      const startTime = audioContext.currentTime;
-      const masterGain = audioContext.createGain();
-      const notes = [
-        { frequency: 659.25, startOffset: 0, duration: 0.34, peak: 0.13 },
-        { frequency: 880, startOffset: 0.13, duration: 0.38, peak: 0.11 },
-        { frequency: 1174.66, startOffset: 0.28, duration: 0.48, peak: 0.08 }
-      ];
-
-      masterGain.gain.setValueAtTime(0.82, startTime);
-      masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.86);
-      masterGain.connect(audioContext.destination);
-
-      notes.forEach(({ frequency, startOffset, duration, peak }) => {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        const noteStart = startTime + startOffset;
-        const noteEnd = noteStart + duration;
-
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(frequency, noteStart);
-        oscillator.frequency.exponentialRampToValueAtTime(
-          frequency * 0.985,
-          noteEnd
-        );
-        gain.gain.setValueAtTime(0.0001, noteStart);
-        gain.gain.exponentialRampToValueAtTime(peak, noteStart + 0.018);
-        gain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
-
-        oscillator.connect(gain);
-        gain.connect(masterGain);
-        oscillator.start(noteStart);
-        oscillator.stop(noteEnd + 0.02);
-      });
-
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
-
   async function handleEnableAudio() {
-    const didPlay = await playReadyNotification();
+    const didPlay = await playReadyNotification(audioContextRef);
     setNeedsAudioActivation(!didPlay);
   }
-
-  useEffect(() => {
-    if (isLoading || ordersError) {
-      return;
-    }
-
-    const currentReadyOrderIds = new Set(readyOrderIds);
-
-    if (!hasInitializedReadyAudioRef.current) {
-      knownReadyOrderIdsRef.current = currentReadyOrderIds;
-      hasInitializedReadyAudioRef.current = true;
-      return;
-    }
-
-    const hasNewReadyOrder = readyOrderIds.some(
-      (orderId) => !knownReadyOrderIdsRef.current.has(orderId)
-    );
-    knownReadyOrderIdsRef.current = currentReadyOrderIds;
-
-    if (!hasNewReadyOrder) {
-      return;
-    }
-
-    playReadyNotification().then((didPlay) => {
-      setNeedsAudioActivation(!didPlay);
-    });
-  }, [isLoading, ordersError, playReadyNotification, readyOrderIds]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>, platform: Platform) {
     event.preventDefault();
