@@ -13,12 +13,14 @@ import { formatPlatformName, getPlatformHeaderStyle } from "../utils/orders";
 const MANUAL_PLATFORMS: Platform[] = ["IFOOD", "99FOOD", "KEETA"];
 
 type ManualOrderPlatformColumnProps = {
+  isSingleSearchResult: boolean;
   orders: Order[];
   platform: Platform;
   onSelectOrder: (order: Order) => void;
 };
 
 function ManualOrderPlatformColumn({
+  isSingleSearchResult,
   orders,
   platform,
   onSelectOrder
@@ -39,7 +41,11 @@ function ManualOrderPlatformColumn({
         {orders.length > 0
           ? orders.map((order) => (
               <button
-                className="manual-order-button"
+                className={
+                  isSingleSearchResult
+                    ? "manual-order-button manual-order-button-single-result"
+                    : "manual-order-button"
+                }
                 key={order.id}
                 onClick={() => onSelectOrder(order)}
                 type="button"
@@ -82,6 +88,7 @@ export function ReadyCheck() {
     () => allReadyOrders.filter((order) => order.number.includes(searchTerm)),
     [allReadyOrders, searchTerm]
   );
+  const isSingleSearchResult = searchTerm.length > 0 && readyOrders.length === 1;
 
   const ordersByPlatform = useMemo(
     () =>
@@ -209,13 +216,20 @@ export function ReadyCheck() {
         ) : null}
       </div>
 
-      <div className="manual-order-board">
+      <div
+        className={
+          searchTerm
+            ? "manual-order-board"
+            : "manual-order-board manual-order-board-mobile-empty"
+        }
+      >
         {isLoading ? <EmptyState title="Carregando pedidos..." /> : null}
         {ordersError ? <p className="form-error">{ordersError}</p> : null}
 
         {!isLoading && !ordersError
           ? MANUAL_PLATFORMS.map((platform) => (
               <ManualOrderPlatformColumn
+                isSingleSearchResult={isSingleSearchResult}
                 key={platform}
                 onSelectOrder={(order) => {
                   setSelectedOrder(order);
