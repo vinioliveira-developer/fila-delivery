@@ -929,13 +929,18 @@ select:focus {
 }
 
 .platform-board.ready .platform-list {
+  align-content: start;
   flex: 1;
   grid-template-columns: 1fr;
+  justify-content: start;
   min-height: 0;
+  overflow: hidden;
 }
 
-.platform-board.ready .platform-list-multiple-columns {
-  grid-template-columns: repeat(var(--platform-list-column-count), minmax(0, 1fr));
+.platform-board.ready .platform-list-ready-fit {
+  grid-auto-flow: column;
+  grid-template-columns: repeat(var(--ready-grid-column-count), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--ready-grid-row-count), var(--ready-number-height, 70px));
 }
 
 .platform-list-column {
@@ -946,16 +951,31 @@ select:focus {
 }
 
 .platform-number {
+  align-items: center;
   background: #0bf577;
   border-radius: 8px;
+  box-sizing: border-box;
   color: #101820;
-  font-size: 44px;
+  display: flex;
+  font-size: clamp(12px, 3.4vw, 44px);
   font-weight: 950;
+  justify-content: center;
+  height: 100%;
   line-height: 1;
   min-height: 70px;
   min-width: 0;
+  overflow: hidden;
   padding: 12px;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.platform-board.ready .platform-number {
+  font-size: var(--ready-number-font-size, clamp(12px, 3.4vw, 44px));
+  min-height: 0;
+  padding: var(--ready-number-padding, 12px);
 }
 
 .modal-backdrop {

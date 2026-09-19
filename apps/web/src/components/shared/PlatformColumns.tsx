@@ -14,6 +14,10 @@ import {
 
 const DEFAULT_PLATFORM_NUMBER_HEIGHT = 70;
 const DEFAULT_PLATFORM_LIST_GAP = 10;
+const DEFAULT_READY_NUMBER_FONT_SIZE = 44;
+const MIN_READY_NUMBER_FONT_SIZE = 12;
+const READY_TARGET_COLUMN_WIDTH = 150;
+const READY_DIGIT_WIDTH_RATIO = 0.62;
 
 type PlatformColumnsProps = {
   orders: Order[];
@@ -22,11 +26,24 @@ type PlatformColumnsProps = {
 
 type PlatformListStyle = CSSProperties & {
   "--platform-list-column-count"?: number;
+  "--ready-grid-column-count"?: number;
+  "--ready-grid-row-count"?: number;
+  "--ready-number-font-size"?: string;
+  "--ready-number-height"?: string;
+  "--ready-number-padding"?: string;
 };
 
 type PlatformListLayout = {
   columnCount: number;
+  fontSize: number;
+  itemSpans: Record<string, number>;
+  numberHeight: number;
+  padding: number;
   rowsPerColumn: number;
+};
+
+type ReadyLayoutCandidate = PlatformListLayout & {
+  score: number;
 };
 
 function ordersByPlatform(orders: Order[]) {
@@ -57,12 +74,23 @@ function PlatformColumn({
   const firstNumberRef = useRef<HTMLDivElement | null>(null);
   const [listLayout, setListLayout] = useState<PlatformListLayout>({
     columnCount: 1,
+    fontSize: DEFAULT_READY_NUMBER_FONT_SIZE,
+    itemSpans: {},
+    numberHeight: DEFAULT_PLATFORM_NUMBER_HEIGHT,
+    padding: 12,
     rowsPerColumn: 1
   });
 
   useLayoutEffect(() => {
     if (!useAutoColumns) {
-      setListLayout({ columnCount: 1, rowsPerColumn: 1 });
+      setListLayout({
+        columnCount: 1,
+        fontSize: DEFAULT_READY_NUMBER_FONT_SIZE,
+        itemSpans: {},
+        numberHeight: DEFAULT_PLATFORM_NUMBER_HEIGHT,
+        padding: 12,
+        rowsPerColumn: 1
+      });
       return;
     }
 
@@ -71,7 +99,14 @@ function PlatformColumn({
       const columnElement = columnRef.current;
 
       if (!listElement || !columnElement || orders.length === 0) {
-        setListLayout({ columnCount: 1, rowsPerColumn: 1 });
+        setListLayout({
+          columnCount: 1,
+          fontSize: DEFAULT_READY_NUMBER_FONT_SIZE,
+          itemSpans: {},
+          numberHeight: DEFAULT_PLATFORM_NUMBER_HEIGHT,
+          padding: 12,
+          rowsPerColumn: 1
+        });
         return;
       }
 
@@ -82,36 +117,179 @@ function PlatformColumn({
         : DEFAULT_PLATFORM_LIST_GAP;
       const measuredPaddingTop = Number.parseFloat(listStyle.paddingTop);
       const measuredPaddingBottom = Number.parseFloat(listStyle.paddingBottom);
+      const measuredPaddingLeft = Number.parseFloat(listStyle.paddingLeft);
+      const measuredPaddingRight = Number.parseFloat(listStyle.paddingRight);
       const verticalPadding =
         (Number.isFinite(measuredPaddingTop) ? measuredPaddingTop : 0) +
         (Number.isFinite(measuredPaddingBottom) ? measuredPaddingBottom : 0);
-      const measuredNumberHeight = firstNumberRef.current
-        ? firstNumberRef.current.getBoundingClientRect().height
-        : DEFAULT_PLATFORM_NUMBER_HEIGHT;
-      const numberHeight =
-        measuredNumberHeight > 0
-          ? Math.max(DEFAULT_PLATFORM_NUMBER_HEIGHT, measuredNumberHeight)
-          : DEFAULT_PLATFORM_NUMBER_HEIGHT;
+      const horizontalPadding =
+        (Number.isFinite(measuredPaddingLeft) ? measuredPaddingLeft : 0) +
+        (Number.isFinite(measuredPaddingRight) ? measuredPaddingRight : 0);
+      const availableWidth = listElement.clientWidth - horizontalPadding;
       const availableHeight =
         columnElement.getBoundingClientRect().bottom -
         listElement.getBoundingClientRect().top -
         verticalPadding;
 
-      if (availableHeight <= 0) {
+      if (availableWidth <= 0 || availableHeight <= 0) {
         return;
       }
 
-      const rowsPerColumn = Math.max(
-        1,
-        Math.floor((availableHeight + gap) / (numberHeight + gap))
-      );
-      const columnCount = Math.max(1, Math.ceil(orders.length / rowsPerColumn));
+      let bestLayout: ReadyLayoutCandidate | null = null;
+
+      function getPadding(numberHeight: number) {
+        return Math.max(2, Math.min(12, numberHeight * 0.16));
+      }
+
+      function getFontSize(
+        numberHeight: number,
+        columnWidth: number,
+        padding: number
+      ) {
+        const normalDigitCount = Math.min(
+          4,
+          Math.max(1, ...orders.map((order) => order.number.length))
+        );
+
+        return Math.max(
+          MIN_READY_NUMBER_FONT_SIZE,
+          Math.min(
+            DEFAULT_READY_NUMBER_FONT_SIZE,
+            numberHeight * 0.62,
+            ((columnWidth - padding * 2) / normalDigitCount) /
+              READY_DIGIT_WIDTH_RATIO
+          )
+        );
+      }
+
+      function getItemSpans(
+        columnCount: number,
+        columnWidth: number,
+        fontSize: number,
+        padding: number
+      ) {
+        return orders.reduce<Record<string, number>>((spans, order) => {
+          const neededWidth =
+            order.number.length * fontSize * READY_DIGIT_WIDTH_RATIO +
+            padding * 2;
+          const span = Math.max(
+            1,
+            Math.min(
+              columnCount,
+              Math.ceil((neededWidth + gap) / (columnWidth + gap))
+            )
+          );
+
+          spans[order.id] = span;
+          return spans;
+        }, {});
+      }
+
+      function countRows(columnCount: number, itemSpans: Record<string, number>) {
+        let rowCount = 1;
+        let usedColumns = 0;
+
+        orders.forEach((order) => {
+          const span = itemSpans[order.id] ?? 1;
+
+          if (usedColumns > 0 && usedColumns + span > columnCount) {
+            rowCount += 1;
+            usedColumns = 0;
+          }
+
+          usedColumns += span;
+
+          if (usedColumns >= columnCount) {
+            usedColumns = 0;
+            if (order !== orders[orders.length - 1]) {
+              rowCount += 1;
+            }
+          }
+        });
+
+        return rowCount;
+      }
+
+      for (let columnCount = 1; columnCount <= orders.length; columnCount += 1) {
+        const columnWidth =
+          (availableWidth - gap * (columnCount - 1)) / columnCount;
+
+        if (columnWidth <= 0) {
+          continue;
+        }
+
+        let numberHeight = DEFAULT_PLATFORM_NUMBER_HEIGHT;
+        let padding = getPadding(numberHeight);
+        let fontSize = getFontSize(numberHeight, columnWidth, padding);
+        let itemSpans = getItemSpans(columnCount, columnWidth, fontSize, padding);
+        let rowsPerColumn = countRows(columnCount, itemSpans);
+        const availableNumberHeight =
+          (availableHeight - gap * (rowsPerColumn - 1)) / rowsPerColumn;
+
+        if (availableNumberHeight <= 0) {
+          continue;
+        }
+
+        numberHeight = Math.min(DEFAULT_PLATFORM_NUMBER_HEIGHT, availableNumberHeight);
+        padding = getPadding(numberHeight);
+        fontSize = getFontSize(numberHeight, columnWidth, padding);
+        itemSpans = getItemSpans(columnCount, columnWidth, fontSize, padding);
+        rowsPerColumn = countRows(columnCount, itemSpans);
+
+        const totalHeight =
+          rowsPerColumn * numberHeight + (rowsPerColumn - 1) * gap;
+
+        if (totalHeight > availableHeight + 0.5) {
+          const reducedHeight =
+            (availableHeight - gap * (rowsPerColumn - 1)) / rowsPerColumn;
+
+          if (reducedHeight <= 0) {
+            continue;
+          }
+
+          numberHeight = reducedHeight;
+          padding = getPadding(numberHeight);
+          fontSize = getFontSize(numberHeight, columnWidth, padding);
+          itemSpans = getItemSpans(columnCount, columnWidth, fontSize, padding);
+          rowsPerColumn = countRows(columnCount, itemSpans);
+        }
+
+        const heightRatio = numberHeight / DEFAULT_PLATFORM_NUMBER_HEIGHT;
+        const score =
+          heightRatio * 1000 +
+          fontSize * 8 -
+          columnCount * 18 -
+          rowsPerColumn * 0.2;
+
+        if (!bestLayout || score > bestLayout.score) {
+          bestLayout = {
+            columnCount,
+            fontSize,
+            itemSpans,
+            numberHeight,
+            padding,
+            rowsPerColumn,
+            score
+          };
+        }
+      }
+
+      if (!bestLayout) {
+        return;
+      }
 
       setListLayout((current) =>
-        current.columnCount === columnCount &&
-        current.rowsPerColumn === rowsPerColumn
+        current.columnCount === bestLayout.columnCount &&
+        Math.abs(current.fontSize - bestLayout.fontSize) < 0.5 &&
+        Math.abs(current.numberHeight - bestLayout.numberHeight) < 0.5 &&
+        Math.abs(current.padding - bestLayout.padding) < 0.5 &&
+        current.rowsPerColumn === bestLayout.rowsPerColumn &&
+        orders.every(
+          (order) =>
+            current.itemSpans[order.id] === bestLayout.itemSpans[order.id]
+        )
           ? current
-          : { columnCount, rowsPerColumn }
+          : bestLayout
       );
     }
 
@@ -135,18 +313,16 @@ function PlatformColumn({
     return () => observer.disconnect();
   }, [orders.length, useAutoColumns]);
 
-  const orderColumns = useMemo(() => {
-    return Array.from({ length: listLayout.columnCount }, (_, columnIndex) => {
-      const start = columnIndex * listLayout.rowsPerColumn;
-      return orders.slice(start, start + listLayout.rowsPerColumn);
-    });
-  }, [listLayout, orders]);
-
   const listStyle = useMemo<PlatformListStyle>(
     () => ({
-      "--platform-list-column-count": listLayout.columnCount
+      "--platform-list-column-count": listLayout.columnCount,
+      "--ready-grid-column-count": listLayout.columnCount,
+      "--ready-grid-row-count": listLayout.rowsPerColumn,
+      "--ready-number-font-size": `${listLayout.fontSize}px`,
+      "--ready-number-height": `${listLayout.numberHeight}px`,
+      "--ready-number-padding": `${listLayout.padding}px`
     }),
-    [listLayout.columnCount]
+    [listLayout]
   );
 
   return (
@@ -157,29 +333,22 @@ function PlatformColumn({
 
       <div
         className={
-          useAutoColumns && listLayout.columnCount > 1
-            ? "platform-list platform-list-multiple-columns"
+          useAutoColumns
+            ? "platform-list platform-list-ready-fit"
             : "platform-list"
         }
         ref={listRef}
         style={useAutoColumns ? listStyle : undefined}
       >
         {useAutoColumns
-          ? orderColumns.map((orderColumn, columnIndex) => (
-              <div className="platform-list-column" key={columnIndex}>
-                {orderColumn.map((order, orderIndex) => (
-                  <div
-                    className="platform-number"
-                    key={order.id}
-                    ref={
-                      columnIndex === 0 && orderIndex === 0
-                        ? firstNumberRef
-                        : undefined
-                    }
-                  >
-                    {order.number}
-                  </div>
-                ))}
+          ? orders.map((order, orderIndex) => (
+              <div
+                className="platform-number"
+                key={order.id}
+                ref={orderIndex === 0 ? firstNumberRef : undefined}
+                style={{ gridColumn: `span ${listLayout.itemSpans[order.id] ?? 1}` }}
+              >
+                {order.number}
               </div>
             ))
           : orders.map((order, orderIndex) => (
