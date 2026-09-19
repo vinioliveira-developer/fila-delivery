@@ -706,22 +706,14 @@ select:focus {
 }
 
 .manual-order-list {
+  align-content: start;
   display: grid;
   flex: 1;
   gap: 10px;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
   min-height: 0;
-}
-
-.manual-order-list-multiple-columns {
-  grid-template-columns: repeat(var(--manual-order-column-count), minmax(0, 1fr));
-}
-
-.manual-order-list-column {
-  align-content: start;
-  display: grid;
-  gap: 10px;
-  min-width: 0;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .manual-order-button {
@@ -736,6 +728,7 @@ select:focus {
   min-width: 0;
   padding: 8px 12px;
   text-align: left;
+  white-space: nowrap;
   width: 100%;
 }
 

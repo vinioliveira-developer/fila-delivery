@@ -1,8 +1,5 @@
 import {
-  CSSProperties,
   FormEvent,
-  useCallback,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState
@@ -14,17 +11,6 @@ import { playReadyNotification } from "../utils/readyNotificationAudio";
 import { formatPlatformName, getPlatformHeaderStyle } from "../utils/orders";
 
 const MANUAL_PLATFORMS: Platform[] = ["IFOOD", "99FOOD", "KEETA"];
-const DEFAULT_ORDER_BUTTON_HEIGHT = 58;
-const DEFAULT_ORDER_LIST_GAP = 10;
-
-type ManualOrderListStyle = CSSProperties & {
-  "--manual-order-column-count"?: number;
-};
-
-type ManualOrderListLayout = {
-  columnCount: number;
-  rowsPerColumn: number;
-};
 
 type ManualOrderPlatformColumnProps = {
   orders: Order[];
@@ -37,95 +23,8 @@ function ManualOrderPlatformColumn({
   platform,
   onSelectOrder
 }: ManualOrderPlatformColumnProps) {
-  const columnRef = useRef<HTMLElement | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const firstButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [listLayout, setListLayout] = useState<ManualOrderListLayout>({
-    columnCount: 1,
-    rowsPerColumn: 1
-  });
-
-  useLayoutEffect(() => {
-    function updateLayout() {
-      const listElement = listRef.current;
-      const columnElement = columnRef.current;
-
-      if (!listElement || !columnElement || orders.length === 0) {
-        setListLayout({ columnCount: 1, rowsPerColumn: 1 });
-        return;
-      }
-
-      const listStyle = window.getComputedStyle(listElement);
-      const measuredGap = Number.parseFloat(listStyle.rowGap);
-      const gap = Number.isFinite(measuredGap)
-        ? Math.max(DEFAULT_ORDER_LIST_GAP, measuredGap)
-        : DEFAULT_ORDER_LIST_GAP;
-      const measuredButtonHeight = firstButtonRef.current
-        ? firstButtonRef.current.getBoundingClientRect().height
-        : DEFAULT_ORDER_BUTTON_HEIGHT;
-      const buttonHeight =
-        measuredButtonHeight > 0
-          ? Math.max(DEFAULT_ORDER_BUTTON_HEIGHT, measuredButtonHeight)
-          : DEFAULT_ORDER_BUTTON_HEIGHT;
-      const availableHeight =
-        columnElement.getBoundingClientRect().bottom -
-        listElement.getBoundingClientRect().top;
-
-      if (availableHeight <= 0) {
-        return;
-      }
-
-      const rowsPerColumn = Math.max(
-        1,
-        Math.floor((availableHeight + gap) / (buttonHeight + gap))
-      );
-      const columnCount = Math.max(1, Math.ceil(orders.length / rowsPerColumn));
-
-      setListLayout((current) =>
-        current.columnCount === columnCount &&
-        current.rowsPerColumn === rowsPerColumn
-          ? current
-          : { columnCount, rowsPerColumn }
-      );
-    }
-
-    updateLayout();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateLayout);
-      return () => window.removeEventListener("resize", updateLayout);
-    }
-
-    const observedColumn = columnRef.current;
-    const observer = new ResizeObserver(() => updateLayout());
-
-    if (observedColumn) {
-      observer.observe(observedColumn);
-    }
-
-    if (listRef.current) {
-      observer.observe(listRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [orders.length]);
-
-  const orderColumns = useMemo(() => {
-    return Array.from({ length: listLayout.columnCount }, (_, columnIndex) => {
-      const start = columnIndex * listLayout.rowsPerColumn;
-      return orders.slice(start, start + listLayout.rowsPerColumn);
-    });
-  }, [listLayout, orders]);
-
-  const listStyle = useMemo<ManualOrderListStyle>(
-    () => ({
-      "--manual-order-column-count": listLayout.columnCount
-    }),
-    [listLayout.columnCount]
-  );
-
   return (
-    <section className="manual-order-column" key={platform} ref={columnRef}>
+    <section className="manual-order-column" key={platform}>
       <div
         className="section-title platform-card-header"
         style={getPlatformHeaderStyle(platform)}
@@ -136,32 +35,17 @@ function ManualOrderPlatformColumn({
         </span>
       </div>
 
-      <div
-        className={
-          listLayout.columnCount > 1
-            ? "manual-order-list manual-order-list-multiple-columns"
-            : "manual-order-list"
-        }
-        ref={listRef}
-        style={listStyle}
-      >
+      <div className="manual-order-list">
         {orders.length > 0
-          ? orderColumns.map((orderColumn, columnIndex) => (
-              <div className="manual-order-list-column" key={columnIndex}>
-                {orderColumn.map((order, orderIndex) => (
-                  <button
-                    className="manual-order-button"
-                    key={order.id}
-                    onClick={() => onSelectOrder(order)}
-                    ref={
-                      columnIndex === 0 && orderIndex === 0 ? firstButtonRef : undefined
-                    }
-                    type="button"
-                  >
-                    {order.number}
-                  </button>
-                ))}
-              </div>
+          ? orders.map((order) => (
+              <button
+                className="manual-order-button"
+                key={order.id}
+                onClick={() => onSelectOrder(order)}
+                type="button"
+              >
+                {order.number}
+              </button>
             ))
           : null}
 
