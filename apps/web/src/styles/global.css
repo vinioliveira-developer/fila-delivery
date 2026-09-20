@@ -757,6 +757,16 @@ select:focus {
   gap: 10px;
 }
 
+.history-search {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.history-search input {
+  min-width: 0;
+  width: 100%;
+}
+
 .date-filter {
   background: #ffffff;
   border: 1px solid #cbd6df;
@@ -1096,6 +1106,10 @@ select:focus {
   }
 
   .ready-check-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .history-search {
     grid-template-columns: minmax(0, 1fr);
   }
 

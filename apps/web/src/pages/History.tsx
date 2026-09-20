@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EmptyState } from "../components/shared/EmptyState";
 import { OrderCard } from "../components/shared/OrderCard";
 import { useOrders } from "../hooks/useOrders";
@@ -12,11 +12,28 @@ import {
 export function History() {
   const { isLoading, orders, ordersError, clearDeliveredAndCanceled } = useOrders();
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
+  const [search, setSearch] = useState("");
   const dayOptions = lastSevenDays();
-  const finished = orders.filter(
-    (order) =>
-      (order.status === "ENTREGUE" || order.status === "CANCELADO") &&
-      getOrderFinalizedAt(order).slice(0, 10) === selectedDate
+  const searchTerm = search.trim().toLowerCase();
+  const historicalOrders = useMemo(
+    () =>
+      orders.filter(
+        (order) => order.status === "ENTREGUE" || order.status === "CANCELADO"
+      ),
+    [orders]
+  );
+  const finished = useMemo(
+    () =>
+      searchTerm
+        ? historicalOrders.filter(
+            (order) =>
+              order.number.toLowerCase().includes(searchTerm) ||
+              order.id.toLowerCase().includes(searchTerm)
+          )
+        : historicalOrders.filter(
+            (order) => getOrderFinalizedAt(order).slice(0, 10) === selectedDate
+          ),
+    [historicalOrders, searchTerm, selectedDate]
   );
 
   return (
@@ -46,6 +63,21 @@ export function History() {
         ))}
       </div>
 
+      <div className="toolbar history-search">
+        <input
+          aria-label="Buscar pedido no historico"
+          inputMode="numeric"
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar pedido..."
+          value={search}
+        />
+        {searchTerm ? (
+          <button className="ghost-button" onClick={() => setSearch("")} type="button">
+            Limpar
+          </button>
+        ) : null}
+      </div>
+
       <div className="order-grid">
         {isLoading ? <EmptyState title="Carregando historico..." /> : null}
         {ordersError ? <p className="form-error">{ordersError}</p> : null}
@@ -53,7 +85,13 @@ export function History() {
           <OrderCard key={order.id} order={order} />
         ))}
         {!isLoading && !ordersError && finished.length === 0 ? (
-          <EmptyState title="Nenhum pedido finalizado nesta data." />
+          <EmptyState
+            title={
+              searchTerm
+                ? "Nenhum pedido encontrado."
+                : "Nenhum pedido finalizado nesta data."
+            }
+          />
         ) : null}
       </div>
     </section>
