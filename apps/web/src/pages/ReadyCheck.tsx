@@ -72,7 +72,8 @@ function ManualOrderPlatformColumn({
 }
 
 export function ReadyCheck() {
-  const { addOrder, isLoading, orders, ordersError, updateStatus } = useOrders();
+  const { addOrder, isLoading, orders, ordersError, updateStatus } =
+    useOrders("PRONTO");
   const audioContextRef = useRef<AudioContext | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== "undefined" &&

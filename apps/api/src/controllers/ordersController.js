@@ -3,8 +3,12 @@ import { readJson, sendSuccess } from "../utils/http.js";
 import { logger } from "../utils/logger.js";
 
 export const ordersController = {
-  async list(_request, response, context) {
-    const orders = ordersService.list(context.user.restaurant_id);
+  async list(request, response, context) {
+    const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
+    const orders = ordersService.list(
+      context.user.restaurant_id,
+      url.searchParams.get("status")
+    );
     sendSuccess(response, 200, "Pedidos carregados com sucesso.", { orders });
   },
 

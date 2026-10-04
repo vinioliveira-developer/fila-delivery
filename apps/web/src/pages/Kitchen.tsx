@@ -7,7 +7,8 @@ import { Platform } from "../types/order";
 import { getPlatformHeaderStyle } from "../utils/orders";
 
 export function Kitchen() {
-  const { isLoading: isLoadingOrders, orders, ordersError, addOrder } = useOrders();
+  const { isLoading: isLoadingOrders, orders, ordersError, addOrder } =
+    useOrders("EM_PREPARO");
   const { activePlatforms, addPlatform, isLoading, platformError, removePlatform } =
     usePlatforms();
   const [newPlatform, setNewPlatform] = useState("");

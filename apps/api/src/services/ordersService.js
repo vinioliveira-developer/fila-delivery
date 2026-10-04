@@ -8,8 +8,10 @@ const allowedStatuses = ["EM_PREPARO", "PRONTO", "ENTREGUE", "CANCELADO"];
 const allowedCreateStatuses = ["EM_PREPARO", "PRONTO"];
 
 export const ordersService = {
-  list(restaurantId) {
-    return ordersRepository.listByRestaurant(restaurantId).map(rowToOrder);
+  list(restaurantId, statusFilter) {
+    return ordersRepository
+      .listByRestaurant(restaurantId, statusFilter)
+      .map(rowToOrder);
   },
 
   create(restaurantId, payload) {

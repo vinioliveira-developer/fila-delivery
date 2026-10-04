@@ -11,7 +11,7 @@ type PendingAction = {
 } | null;
 
 export function Delivery() {
-  const { isLoading, orders, ordersError, updateStatus } = useOrders();
+  const { isLoading, orders, ordersError, updateStatus } = useOrders("DELIVERY");
   const [search, setSearch] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const ready = orders.filter((order) => order.status === "PRONTO");

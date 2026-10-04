@@ -4,7 +4,7 @@ import { useOrders } from "../hooks/useOrders";
 import { playReadyNotification } from "../utils/readyNotificationAudio";
 
 export function TvReady() {
-  const { isLoading, orders, ordersError } = useOrders();
+  const { isLoading, orders, ordersError } = useOrders("PRONTO");
   const audioContextRef = useRef<AudioContext | null>(null);
   const knownReadyOrderIdsRef = useRef<Set<string>>(new Set());
   const hasInitializedReadyAudioRef = useRef(false);

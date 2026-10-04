@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CreateOrderInput,
+  OrdersListStatusFilter,
   OrdersService
 } from "../services/ordersService";
 import { Order, OrderStatus } from "../types/order";
@@ -22,7 +23,7 @@ function areOrdersEqual(current: Order[], next: Order[]) {
   return JSON.stringify(current) === JSON.stringify(next);
 }
 
-export function useOrders() {
+export function useOrders(statusFilter?: OrdersListStatusFilter) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [ordersError, setOrdersError] = useState("");
@@ -38,7 +39,7 @@ export function useOrders() {
 
   const refreshOrders = useCallback(async (clearOnError = false) => {
     try {
-      const response = await OrdersService.list();
+      const response = await OrdersService.list(statusFilter);
 
       if (!isMountedRef.current) {
         return;
@@ -63,7 +64,7 @@ export function useOrders() {
         error instanceof Error ? error.message : "Erro ao carregar pedidos."
       );
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     refreshOrders(true).finally(() => {

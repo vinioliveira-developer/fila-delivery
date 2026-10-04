@@ -2,7 +2,7 @@ import { PlatformColumns } from "../components/shared/PlatformColumns";
 import { useOrders } from "../hooks/useOrders";
 
 export function TvPreparing() {
-  const { isLoading, orders, ordersError } = useOrders();
+  const { isLoading, orders, ordersError } = useOrders("EM_PREPARO");
   const preparing = orders.filter((order) => order.status === "EM_PREPARO");
 
   return (

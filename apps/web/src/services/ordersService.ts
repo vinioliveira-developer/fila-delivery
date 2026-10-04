@@ -1,6 +1,13 @@
 import { Order, OrderStatus, Platform } from "../types/order";
 import { httpRequest } from "./http/httpClient";
 
+export type OrdersListStatusFilter =
+  | OrderStatus
+  | "FINALIZADOS"
+  | "ATIVOS"
+  | "DELIVERY"
+  | "HISTORY";
+
 export type CreateOrderInput = {
   number: string;
   platform: Platform;
@@ -9,8 +16,12 @@ export type CreateOrderInput = {
 };
 
 export const OrdersService = {
-  list() {
-    return httpRequest<{ orders: Order[] }>("/orders");
+  list(statusFilter?: OrdersListStatusFilter) {
+    const query = statusFilter
+      ? `?${new URLSearchParams({ status: statusFilter }).toString()}`
+      : "";
+
+    return httpRequest<{ orders: Order[] }>(`/orders${query}`);
   },
 
   create(input: CreateOrderInput) {

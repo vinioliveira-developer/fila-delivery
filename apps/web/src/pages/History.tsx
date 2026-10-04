@@ -10,7 +10,8 @@ import {
 } from "../utils/date";
 
 export function History() {
-  const { isLoading, orders, ordersError, clearDeliveredAndCanceled } = useOrders();
+  const { isLoading, orders, ordersError, clearDeliveredAndCanceled } =
+    useOrders("HISTORY");
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
   const [search, setSearch] = useState("");
   const dayOptions = lastSevenDays();

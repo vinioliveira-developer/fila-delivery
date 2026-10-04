@@ -1,7 +1,88 @@
 import { db } from "../database/connection.js";
 
 export const ordersRepository = {
-  listByRestaurant(restaurantId) {
+  listByRestaurant(restaurantId, statusFilter) {
+    if (statusFilter === "EM_PREPARO" || statusFilter === "PRONTO") {
+      return db
+        .prepare(
+          `
+            SELECT * FROM orders
+            WHERE restaurant_id = ?
+              AND deleted_at IS NULL
+              AND status = ?
+            ORDER BY created_at DESC
+          `
+        )
+        .all(restaurantId, statusFilter);
+    }
+
+    if (statusFilter === "FINALIZADOS") {
+      return db
+        .prepare(
+          `
+            SELECT * FROM orders
+            WHERE restaurant_id = ?
+              AND deleted_at IS NULL
+              AND status IN ('ENTREGUE', 'CANCELADO')
+            ORDER BY created_at DESC
+          `
+        )
+        .all(restaurantId);
+    }
+
+    if (statusFilter === "HISTORY") {
+      return db
+        .prepare(
+          `
+            SELECT * FROM orders
+            WHERE restaurant_id = ?
+              AND deleted_at IS NULL
+              AND status IN ('ENTREGUE', 'CANCELADO')
+              AND COALESCE(delivered_at, canceled_at, updated_at, created_at) >= datetime('now', '-7 days')
+            ORDER BY created_at DESC
+          `
+        )
+        .all(restaurantId);
+    }
+
+    if (statusFilter === "ATIVOS") {
+      return db
+        .prepare(
+          `
+            SELECT * FROM orders
+            WHERE restaurant_id = ?
+              AND deleted_at IS NULL
+              AND status NOT IN ('ENTREGUE', 'CANCELADO')
+            ORDER BY created_at DESC
+          `
+        )
+        .all(restaurantId);
+    }
+
+    if (statusFilter === "DELIVERY") {
+      return db
+        .prepare(
+          `
+            SELECT * FROM orders
+            WHERE restaurant_id = ?
+              AND deleted_at IS NULL
+              AND (
+                status = 'PRONTO'
+                OR (
+                  status = 'ENTREGUE'
+                  AND COALESCE(delivered_at, updated_at, created_at) >= datetime('now', '-7 days')
+                )
+                OR (
+                  status = 'CANCELADO'
+                  AND COALESCE(canceled_at, updated_at, created_at) >= datetime('now', '-7 days')
+                )
+              )
+            ORDER BY created_at DESC
+          `
+        )
+        .all(restaurantId);
+    }
+
     return db
       .prepare(
         `
